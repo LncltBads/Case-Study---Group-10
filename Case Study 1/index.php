@@ -78,6 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-treemap"></script>
 </head>
 <body>
     <div class="container mt-5">
@@ -226,6 +227,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <li>Largest cluster: ${labels[data.indexOf(Math.max(...data))]} with ${Math.max(...data).toLocaleString()} customers</li>
                                 ${results.length > 0 && results[0].min_age && results[0].max_age ? `<li>Age ranges vary across clusters, providing demographic differentiation</li>` : ''}
                                 <li>Each cluster represents a unique customer profile for targeted campaigns</li>
+                                <li>Profitability: ${labels[data.indexOf(Math.max(...data))]} is currently the primary revenue driver based on total customer volume.</li>
+                                <li>Demographic Reach: The presence of ${labels.length} distinct groups indicates a highly diversified market footprint across the database.</li>
+                                <li>Strategic Focus: Segments with lower-than-average purchase counts relative to their size represent the highest priority for re-engagement campaigns.</li>
                                 <li><em>Note: Run the Python clustering script to generate enhanced cluster analysis with detailed explanations</em></li>
                             </ul>`;
                         }
@@ -412,6 +416,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="card">
                             <div class="card-body">
                                 <canvas id="clusterComparisonChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-12 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <canvas id="myTreemap"></canvas>
                             </div>
                         </div>
                     </div>
@@ -648,10 +660,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             }
                         }
                     });
+
+                    const treemapCtx = document.getElementById('myTreemap').getContext('2d');
+
+                    new Chart(treemapCtx, {
+                        type: 'treemap',
+                        data: {
+                            datasets: [{
+                                label: 'Market Share by Cluster',
+                                tree: clusterMetadata.map(c => ({
+                                    name: c.cluster_name,
+                                    value: parseInt(c.customer_count),
+                                    avgSpend: parseFloat(c.avg_purchase_amount)
+                                })),
+                                key: 'value',
+                                groups: ['name'],
+                                spacing: 1,
+                                borderWidth: 1,
+                                borderColor: 'rgba(255, 255, 255, 1)',
+  
+                                backgroundColor: (ctx) => {
+                                    if (!ctx.raw) return 'rgba(54, 162, 235, 0.1)';
+                                    const values = clusterMetadata.map(c => parseInt(c.customer_count));
+                                    const max = Math.max(...values);
+                                    const min = Math.min(...values);
+                                    const current = ctx.raw.v;
+                                    
+                                    const alpha = 0.3 + ((current - min) / (max - min)) * 0.6;
+                                    return `rgba(54, 162, 235, ${alpha})`;
+                                },
+                                labels: {
+                                    display: true,
+                                    formatter: (ctx) => ctx.raw.g,
+                                    font: { size: 12, weight: 'bold' },
+                                    color: '#fff'
+                                }
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                title: {
+                                    display: true,
+                                    text: 'Cluster Market Share'
+                                },
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        title: (items) => items[0].raw.g,
+                                        label: (item) => `Customers: ${item.raw.v.toLocaleString()}`
+                                    }
+                                }
+                            }
+                        }
+                    });
                 </script>
             <?php endif; ?>
         <?php endif; ?>
     </div>
+
+    
 
     <!-- Logout Script -->
     <script>
