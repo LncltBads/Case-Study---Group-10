@@ -244,12 +244,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Main Bar/Line Chart
                 const ctx1 = document.getElementById('mainChart').getContext('2d');
 
+                const colors = [
+                    'rgba(255, 99, 132, 0.8)',
+                    'rgba(54, 162, 235, 0.8)',
+                    'rgba(255, 206, 86, 0.8)',
+                    'rgba(75, 192, 192, 0.8)',
+                    'rgba(153, 102, 255, 0.8)',
+                    'rgba(255, 159, 64, 0.8)'
+                ];
+
                 let chartType = 'bar';
                 let options = {
                     responsive: true,
                     indexAxis: 'x',
                     plugins: {
-                        title: { display: true, text: 'Customer Analysis' },
+                        title: { display: true, text: 'Customer Distribution by <?= ucfirst(str_replace('_', ' ', $segmentationType)) ?>' },
                         legend: { display: true }
                     },
                     scales: { y: { beginAtZero: true } }
@@ -258,7 +267,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (segmentationType === 'age_group' || segmentationType === 'income_bracket') {
                     chartType = 'line';
                 } else if (segmentationType === 'region') {
-                    options.indexAxis = 'y';
+                    options.indexAxis = 'y'; // Task 5.1.4.a
+                } else if (segmentationType === 'purchase_tier') {
+                    chartType = 'polarArea'; // Task 5.1.5
+                    delete options.scales;
+                }
+
+                let distributionType = 'doughnut'; // Task 5.1.4.b
+                if (segmentationType === 'purchase_tier') {
+                    distributionType = 'radar'; // Task 5.1.5
                 }
 
                 new Chart(ctx1, {
@@ -268,7 +285,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         datasets: [{
                             label: 'Total Customers',
                             data: data,
-                            backgroundColor: chartType === 'bar' ? 'rgba(54, 162, 235, 0.6)' : 'rgba(54, 162, 235, 0.2)',
+                            backgroundColor: chartType === 'polarArea' ? colors : (chartType === 'bar' ? 'rgba(54, 162, 235, 0.6)' : 'rgba(54, 162, 235, 0.2)'),
                             borderColor: 'rgba(54, 162, 235, 1)',
                             borderWidth: 2,
                             fill: chartType === 'line'
@@ -279,43 +296,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // Pie Chart for Distribution
                 const ctx2 = document.getElementById('pieChart').getContext('2d');
-                const colors = [
-                    'rgba(255, 99, 132, 0.8)',
-                    'rgba(54, 162, 235, 0.8)',
-                    'rgba(255, 206, 86, 0.8)',
-                    'rgba(75, 192, 192, 0.8)',
-                    'rgba(153, 102, 255, 0.8)',
-                    'rgba(255, 159, 64, 0.8)'
-                ];
 
                 new Chart(ctx2, {
-                    type: 'doughnut',
+                    type: distributionType, 
                     data: {
                         labels: labels,
                         datasets: [{
                             data: data,
-                            backgroundColor: colors.slice(0, labels.length),
-                            borderWidth: 2,
-                            borderColor: '#fff'
+                            backgroundColor: distributionType === 'doughnut' ? colors.slice(0, labels.length) : 'rgba(255, 99, 132, 0.2)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            pointBackgroundColor: 'rgba(255, 99, 132, 1)'
                         }]
                     },
                     options: {
-                        responsive: true,
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: 'Distribution %'
-                            },
-                            legend: {
-                                position: 'bottom',
-                                labels: {
-                                    boxWidth: 15,
-                                    font: {
-                                        size: 10
-                                    }
-                                }
-                            }
-                        }
+                        responsive: true    
                     }
                 });
             </script>
