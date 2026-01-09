@@ -275,7 +275,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 let distributionType = 'doughnut'; // Task 5.1.4.b
                 if (segmentationType === 'purchase_tier') {
-                    distributionType = 'radar'; // Task 5.1.5
+                    distributionType = 'bar'; // Task 5.1.5
                 }
 
                 new Chart(ctx1, {
@@ -298,18 +298,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 const ctx2 = document.getElementById('pieChart').getContext('2d');
 
                 new Chart(ctx2, {
-                    type: distributionType, 
+                    type: distributionType,
                     data: {
-                        labels: labels,
-                        datasets: [{
-                            data: data,
-                            backgroundColor: distributionType === 'doughnut' ? colors.slice(0, labels.length) : 'rgba(255, 99, 132, 0.2)',
-                            borderColor: 'rgba(255, 99, 132, 1)',
-                            pointBackgroundColor: 'rgba(255, 99, 132, 1)'
-                        }]
+                        labels: distributionType === 'bar' ? ['Total Distribution'] : labels,
+                        datasets: distributionType === 'bar'
+                            ? results.map((row, i) => ({
+                                label: labels[i],
+                                data: [data[i]],
+                                backgroundColor: colors[i % colors.length]
+                            }))
+                            : [{
+                                data: data,
+                                backgroundColor: colors.slice(0, labels.length),
+                                borderColor: '#fff',
+                                borderWidth: 2
+                            }]
                     },
                     options: {
-                        responsive: true    
+                        responsive: true,
+                        scales: distributionType === 'bar' ? {
+                            x: { stacked: true },
+                            y: { stacked: true, beginAtZero: true }
+                        } : {}
                     }
                 });
             </script>
