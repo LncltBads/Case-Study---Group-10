@@ -169,10 +169,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 switch(segmentationType) {
                     case 'gender':
+                        const gap = results.length >= 2 ? Math.abs(results[0].avg_income - results[1].avg_income) : 0;
                         insights = `<ul>
                             <li>Total customers analyzed: ${totalCustomers.toLocaleString()}</li>
                             <li>Gender distribution shows ${labels.length} categories</li>
-                            <li>Largest segment: ${labels[data.indexOf(Math.max(...data))]} with ${Math.max(...data).toLocaleString()} customers (${(Math.max(...data)/totalCustomers*100).toFixed(1)}%)</li>
+                            <li>Income gap between genders: $${gap.toLocaleString()}</li>
+                            <li>Largest segment: ${labels[data.indexOf(Math.max(...data))]} with ${Math.max(...data).toLocaleString()} customers (${totalCustomers > 0 ? (Math.max(...data)/totalCustomers*100).toFixed(1) : 0}%)</li>
                             ${results.length > 0 && results[0].avg_income ? `<li>Average income across genders ranges from $${Math.min(...results.map(r => parseFloat(r.avg_income))).toLocaleString()} to $${Math.max(...results.map(r => parseFloat(r.avg_income))).toLocaleString()}</li>` : ''}
                         </ul>`;
                         break;
@@ -181,7 +183,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         insights = `<ul>
                             <li>Total customers across ${labels.length} regions: ${totalCustomers.toLocaleString()}</li>
                             <li>Top region: ${labels[0]} with ${data[0].toLocaleString()} customers</li>
-                            <li>Regional concentration: Top 3 regions represent ${((data[0] + (data[1]||0) + (data[2]||0))/totalCustomers*100).toFixed(1)}% of total customers</li>
+                            <li>Regional concentration: Top 3 regions represent ${totalCustomers > 0 ? (( (data[0]||0) + (data[1]||0) + (data[2]||0) ) / totalCustomers * 100).toFixed(1) : 0}% of total customers</li>
                             ${results.length > 0 && results[0].avg_purchase_amount ? `<li>Purchase amounts vary from $${Math.min(...results.map(r => parseFloat(r.avg_purchase_amount))).toLocaleString()} to $${Math.max(...results.map(r => parseFloat(r.avg_purchase_amount))).toLocaleString()} across regions</li>` : ''}
                         </ul>`;
                         break;
@@ -189,7 +191,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     case 'age_group':
                         insights = `<ul>
                             <li>Customer base distributed across ${labels.length} age groups</li>
-                            <li>Dominant age group: ${labels[data.indexOf(Math.max(...data))]} with ${Math.max(...data).toLocaleString()} customers (${(Math.max(...data)/totalCustomers*100).toFixed(1)}%)</li>
+                            <li>Dominant age group: ${labels[data.indexOf(Math.max(...data))]} with ${Math.max(...data).toLocaleString()} customers (${totalCustomers > 0 ? (Math.max(...data)/totalCustomers*100).toFixed(1) : 0}%)</li>
                             ${results.length > 0 && results[0].avg_income ? `<li>Income peaks in the ${results.reduce((max, r) => parseFloat(r.avg_income) > parseFloat(max.avg_income) ? r : max).age_group || results[0].age_group} age group at $${Math.max(...results.map(r => parseFloat(r.avg_income))).toLocaleString()}</li>` : ''}
                             ${results.length > 0 && results[0].avg_purchase_amount ? `<li>Highest spending age group: ${results.reduce((max, r) => parseFloat(r.avg_purchase_amount) > parseFloat(max.avg_purchase_amount) ? r : max).age_group || results[0].age_group}</li>` : ''}
                         </ul>`;
@@ -198,7 +200,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     case 'income_bracket':
                         insights = `<ul>
                             <li>Customers segmented into ${labels.length} income brackets</li>
-                            <li>Largest income segment: ${labels[data.indexOf(Math.max(...data))]} (${(Math.max(...data)/totalCustomers*100).toFixed(1)}% of customers)</li>
+                            <li>Largest income segment: ${labels[data.indexOf(Math.max(...data))]} (${totalCustomers > 0 ? (Math.max(...data)/totalCustomers*100).toFixed(1) : 0}% of customers)</li>
                             ${results.length > 0 && results[0].avg_purchase_amount ? `<li>Purchase behavior: ${results.reduce((max, r) => parseFloat(r.avg_purchase_amount) > parseFloat(max.avg_purchase_amount) ? r : max).income_bracket || results[0].income_bracket} shows highest average spending at $${Math.max(...results.map(r => parseFloat(r.avg_purchase_amount))).toLocaleString()}</li>` : ''}
                             <li>Income-purchase correlation can guide targeted marketing strategies</li>
                         </ul>`;
@@ -212,7 +214,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             );
                             insights = `<ul>
                                 <li>Advanced k-means clustering identified <strong>${clusterMetadata.length} distinct customer segments</strong></li>
-                                <li>Largest segment: <strong>${largestCluster.cluster_name}</strong> with ${parseInt(largestCluster.customer_count).toLocaleString()} customers (${((largestCluster.customer_count/totalCustomers)*100).toFixed(1)}%)</li>
+                                <li>Largest segment: <strong>${largestCluster.cluster_name}</strong> with ${parseInt(largestCluster.customer_count).toLocaleString()} customers (${totalCustomers > 0 ? ((largestCluster.customer_count/totalCustomers)*100).toFixed(1) : 0}%)</li>
                                 <li>Clusters range from "${clusterMetadata[0].cluster_name}" to "${clusterMetadata[clusterMetadata.length-1].cluster_name}"</li>
                                 <li>Each cluster has unique demographics, income levels, and purchasing behaviors - view detailed analysis below</li>
                                 <li><strong>Actionable insights:</strong> Scroll down to see cluster characteristics, statistics, visualizations, and marketing recommendations</li>
@@ -232,7 +234,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     case 'purchase_tier':
                         insights = `<ul>
                             <li>Customers categorized into ${labels.length} spending tiers</li>
-                            <li>Largest tier: ${labels[data.indexOf(Math.max(...data))]} (${(Math.max(...data)/totalCustomers*100).toFixed(1)}% of customers)</li>
+                            <li>Largest tier: ${labels[data.indexOf(Math.max(...data))]} (${totalCustomers > 0 ? (Math.max(...data)/totalCustomers*100).toFixed(1) : 0}% of customers)</li>
                             ${results.length > 0 && results[0].avg_income ? `<li>High spenders correlate with income levels averaging $${Math.max(...results.map(r => parseFloat(r.avg_income))).toLocaleString()}</li>` : ''}
                             <li>Understanding spending tiers enables personalized product recommendations</li>
                         </ul>`;
