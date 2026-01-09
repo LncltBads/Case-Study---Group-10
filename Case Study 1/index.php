@@ -243,14 +243,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // Main Bar/Line Chart
                 const ctx1 = document.getElementById('mainChart').getContext('2d');
-                const chartType = (segmentationType === 'age_group' || segmentationType === 'income_bracket') ? 'line' : 'bar';
+
+                let chartType = 'bar';
+                let options = {
+                    responsive: true,
+                    indexAxis: 'x',
+                    plugins: {
+                        title: { display: true, text: 'Customer Analysis' },
+                        legend: { display: true }
+                    },
+                    scales: { y: { beginAtZero: true } }
+                };
+
+                if (segmentationType === 'age_group' || segmentationType === 'income_bracket') {
+                    chartType = 'line';
+                } else if (segmentationType === 'region') {
+                    options.indexAxis = 'y';
+                }
 
                 new Chart(ctx1, {
                     type: chartType,
                     data: {
                         labels: labels,
                         datasets: [{
-                            label: '<?= ucfirst(str_replace('_', ' ', array_keys($results[0])[1])) ?>',
+                            label: 'Total Customers',
                             data: data,
                             backgroundColor: chartType === 'bar' ? 'rgba(54, 162, 235, 0.6)' : 'rgba(54, 162, 235, 0.2)',
                             borderColor: 'rgba(54, 162, 235, 1)',
@@ -258,23 +274,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             fill: chartType === 'line'
                         }]
                     },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: 'Customer Distribution by <?= ucfirst(str_replace('_', ' ', $segmentationType)) ?>'
-                            },
-                            legend: {
-                                display: true
-                            }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true
-                            }
-                        }
-                    }
+                    options: options
                 });
 
                 // Pie Chart for Distribution
@@ -289,7 +289,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ];
 
                 new Chart(ctx2, {
-                    type: 'pie',
+                    type: 'doughnut',
                     data: {
                         labels: labels,
                         datasets: [{
