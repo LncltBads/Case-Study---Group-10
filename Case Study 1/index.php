@@ -63,7 +63,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = $pdo->query($sql);
         $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
-        die("Query execution failed: " . $e->getMessage());
+        // 1. Log detailed error
+        error_log("Query Failed: " . $e->getMessage());
+
+        // 2. Show user-friendly alert
+        echo "<div class='alert alert-danger'>Unable to load data. The error has been logged.</div>";
+        $results = []; // Prevent page crash
     }
 }
 ?>
