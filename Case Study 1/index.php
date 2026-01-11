@@ -55,6 +55,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $sql = "SELECT CASE WHEN purchase_amount < 1000 THEN 'Low Spender (<1k)' WHEN purchase_amount BETWEEN 1000 AND 3000 THEN 'Medium Spender (1k-3k)' ELSE 'High Spender (>3k)' END AS purchase_tier, COUNT(*) AS total_customers, ROUND(AVG(income), 2) AS avg_income FROM customers GROUP BY purchase_tier ORDER BY purchase_tier";
             break;
 
+        case 'clv_tiers':
+            $sql = "SELECT 
+                        CASE 
+                            WHEN (purchase_amount * purchase_frequency * customer_lifespan) >= 50000 THEN 'Platinum'
+                            WHEN (purchase_amount * purchase_frequency * customer_lifespan) BETWEEN 25000 AND 49999 THEN 'Gold'
+                            WHEN (purchase_amount * purchase_frequency * customer_lifespan) BETWEEN 10000 AND 24999 THEN 'Silver'
+                            ELSE 'Bronze'
+                        END AS clv_tier, 
+                        COUNT(*) AS total_customers, 
+                        ROUND(AVG(purchase_amount * purchase_frequency * customer_lifespan), 2) AS avg_clv 
+                    FROM customers 
+                    GROUP BY clv_tier 
+                    ORDER BY avg_clv DESC";
+            break;    
+
         default:
             $sql = "SELECT * FROM customers LIMIT 10"; // Default query
     }
@@ -70,6 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echo "<div class='alert alert-danger'>Unable to load data. The error has been logged.</div>";
         $results = []; // Prevent page crash
     }
+
 }
 ?>
 
@@ -84,6 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-treemap"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 <body>
     <div class="container mt-5">
@@ -101,6 +118,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </a>
                 <small class="text-muted ms-2">Generate customer segments</small>
             </div>
+            
+            <div class="mx-2">
+                <div class="dropdown">
+                    <button class="btn btn-primary dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16" style="vertical-align: -2px; margin-right: 5px;">
+                            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                            <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                        </svg>
+                        Export Data
+                    </button>
+                    
+                    <ul class="dropdown-menu" aria-labelledby="exportDropdown">
+                        <li><h6 class="dropdown-header">Select Format</h6></li>
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <span class="badge bg-secondary me-2">CSV</span> Spreadsheet
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <span class="badge bg-success me-2">XLSX</span> Excel w/ Charts
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <span class="badge bg-danger me-2">PDF</span> Printable Report
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
             <div>
                 <a href="logout.php" class="btn btn-danger">Logout</a>
             </div>
@@ -119,6 +168,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <option value="income_bracket">By Income Bracket</option>
                             <option value="cluster">By Cluster</option>
                             <option value="purchase_tier">By Purchase Tier</option>
+                            <option value="clv_tiers">By CLV Tier</option>
                         </select>
                         <button type="submit" class="btn btn-primary">Show Results</button>
                     </div>
@@ -246,6 +296,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <li>Largest tier: ${labels[data.indexOf(Math.max(...data))]} (${totalCustomers > 0 ? (Math.max(...data)/totalCustomers*100).toFixed(1) : 0}% of customers)</li>
                             ${results.length > 0 && results[0].avg_income ? `<li>High spenders correlate with income levels averaging $${Math.max(...results.map(r => parseFloat(r.avg_income))).toLocaleString()}</li>` : ''}
                             <li>Understanding spending tiers enables personalized product recommendations</li>
+                        </ul>`;
+                        break;
+
+                    case 'clv_tiers':
+                        insights = `<ul>
+                            <li><strong>High Value Concentration:</strong> Platinum and Gold tiers represent the most valuable long-term assets.</li>
+                            <li><strong>Top Tier Stats:</strong> The ${labels[0]} segment generates an average lifetime value of $${Math.max(...results.map(r => parseFloat(r.avg_clv))).toLocaleString()}.</li>
+                            <li><strong>Retention Focus:</strong> Moving ${labels[labels.length-1]} customers (Bronze) to Silver is significantly more cost-effective than acquiring new customers.</li>
+                            <li><strong>Strategy:</strong> Reward Platinum members with exclusivity to prevent churn, as they drive the highest profitability.</li>
                         </ul>`;
                         break;
                 }
