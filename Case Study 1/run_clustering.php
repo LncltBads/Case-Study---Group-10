@@ -269,9 +269,17 @@ function getSpendingCategory($avgPurchase) {
     return "Premium";
 }
 
-function generateClusterName($avgAge, $avgIncome, $avgPurchase) {
-    return getIncomeCategory($avgIncome) . " " .
-           getAgeCategory($avgAge) . " " .
+function getGenderCategory($dominantGender) {
+    return $dominantGender ?? "Unknown";
+}
+function getRegionCategory($dominantRegion) {
+    return $dominantRegion ?? "Unknown";
+}
+function generateClusterName($dominantRegion, $dominantGender, $avgAge, $avgIncome, $avgPurchase) {
+    return getRegionCategory($dominantRegion) . "_" . 
+           getGenderCategory($dominantGender) . "_" .
+           getIncomeCategory($avgIncome) . " " . 
+           getAgeCategory($avgAge) . " " . 
            getSpendingCategory($avgPurchase);
 }
 
@@ -463,7 +471,7 @@ function updateDatabase($pdo, $labels, $clusterStats) {
         ");
 
         foreach ($clusterStats as $stats) {
-            $clusterName = generateClusterName($stats['avg_age'], $stats['avg_income'], $stats['avg_purchase_amount']);
+            $clusterName = $clusterName = generateClusterName($stats['dominant_region'], $stats['dominant_gender'], $stats['avg_age'], $stats['avg_income'], $stats['avg_purchase_amount']);
             $description = generateClusterDescription($stats);
             $recommendations = generateBusinessRecommendations($stats);
 
@@ -555,7 +563,7 @@ echo "CLUSTERING SUMMARY\n";
 echo str_repeat("=", 70) . "\n\n";
 
 foreach ($clusterStats as $stats) {
-    $clusterName = generateClusterName($stats['avg_age'], $stats['avg_income'], $stats['avg_purchase_amount']);
+    $clusterName = $clusterName = generateClusterName($stats['dominant_region'], $stats['dominant_gender'], $stats['avg_age'], $stats['avg_income'], $stats['avg_purchase_amount']);
     echo "Cluster {$stats['cluster_id']}: $clusterName\n";
     echo "  Customers: " . number_format($stats['customer_count']) . "\n";
     echo "  Age: {$stats['avg_age']} ({$stats['age_min']}-{$stats['age_max']})\n";
