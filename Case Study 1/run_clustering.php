@@ -48,6 +48,10 @@ class KMeansClustering {
      * Normalize features using z-score normalization
      */
     public function normalizeData($data) {
+        if (empty($data)) {
+        return [];
+        }
+    
         $normalized = [];
         $features = ['age', 'income', 'purchase_amount'];
         $stats = [];
@@ -81,7 +85,7 @@ class KMeansClustering {
     /**
      * Calculate Euclidean distance between two points
      */
-    private function euclideanDistance($point1, $point2) {
+    public function euclideanDistance($point1, $point2) {
         $sum = 0;
         $sum += pow($point1['age'] - $point2['age'], 2);
         $sum += pow($point1['income'] - $point2['income'], 2);
@@ -92,7 +96,7 @@ class KMeansClustering {
     /**
      * Initialize centroids using k-means++ algorithm
      */
-    private function initializeCentroids($data) {
+    public function initializeCentroids($data) {
         srand(RANDOM_SEED);
         $centroids = [];
 
@@ -133,7 +137,7 @@ class KMeansClustering {
     /**
      * Assign each point to the nearest centroid
      */
-    private function assignClusters($data, $centroids) {
+    public function assignClusters($data, $centroids) {
         $clusters = array_fill(0, $this->k, []);
 
         foreach ($data as $point) {
@@ -182,7 +186,7 @@ class KMeansClustering {
     /**
      * Check if centroids have converged
      */
-    private function hasConverged($oldCentroids, $newCentroids) {
+    public function hasConverged($oldCentroids, $newCentroids) {
         for ($i = 0; $i < $this->k; $i++) {
             $dist = $this->euclideanDistance($oldCentroids[$i], $newCentroids[$i]);
             if ($dist > $this->convergenceThreshold) {
@@ -492,6 +496,8 @@ function updateDatabase($pdo, $labels, $clusterStats) {
     }
 }
 
+if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME'])) {
+
 // ============================================================================
 // Main Execution
 // ============================================================================
@@ -568,5 +574,6 @@ if (!$isCLI) {
     echo "</pre>";
     echo "<p><a href='index.php' style='color:#569cd6;'>← Back to Dashboard</a></p>";
     echo "</body></html>";
+}
 }
 ?>
